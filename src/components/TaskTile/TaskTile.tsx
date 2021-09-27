@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { ThemePropTypes } from "../../App";
 import { Task, Status, Priority, CustomDate, State } from "../../Mocks/items";
 
 interface TaskTilePropTypes {
@@ -8,16 +9,20 @@ interface TaskTilePropTypes {
   onTaskDrop: () => void;
 }
 
-const TaskTileWrapper = styled.div`
+const TaskTileWrapper = styled.div<{
+  theme: ThemePropTypes;
+  taskState?: State;
+}>`
   display: flex;
   flex-direction: column;
   padding: 10px;
-  border: 1px solid gray;
+  border: 1px solid;
+  border-color: ${(props) => props.theme.border};
   border-radius: 5px;
   margin: 10px;
   cursor: grab;
-  background: ${(props: { state?: State }) =>
-    props.state === "completed" ? `rgb(25, 4, 43)` : `rgb(64, 11, 110)`};
+  background: ${(props) =>
+    props.taskState === "completed" ? props.theme.darkBg : props.theme.lightBg};
 
   &:hover {
     border: 1px solid white;
@@ -36,7 +41,7 @@ const TaskSection = styled.div`
   }
 `;
 
-const TaskCheckBox = styled.div`
+const TaskCheckBox = styled.div<{ theme: ThemePropTypes; taskState?: State }>`
   border-radius: 50%;
   border: 2px solid gray;
   width: 22px;
@@ -46,33 +51,36 @@ const TaskCheckBox = styled.div`
   display: flex;
   font-size: 8px;
   font-weight: 800;
-  border-color: ${(props: { state?: State }) =>
-    props.state === "completed" ? `rgb(2, 75, 0)` : `gray`};
-  color: ${(props: { state?: State }) =>
-    props.state === "completed" ? `rgb(2, 75, 0)` : `gray`};
+  border-color: ${(props) => props.theme.border};
+  color: ${(props) =>
+    props.taskState === "completed"
+      ? props.theme.fontSecondary
+      : props.theme.font};
 `;
 
-const TaskTitle = styled.h2`
+const TaskTitle = styled.h2<{ theme: ThemePropTypes; taskState?: State }>`
   padding: 0;
   margin: 0;
   font-size: 16px;
   margin-left: 10px;
-  color: ${(props: { state?: State }) =>
-    props.state === "completed" ? `rgb(2, 75, 0)` : `gray`};
+  color: ${(props) =>
+    props.taskState === "completed"
+      ? props.theme.fontSecondary
+      : props.theme.font};
 `;
 
 const colorMapper = {
-  Low: "Green",
-  Medium: "Black",
-  High: "Blue",
-  "At risk": "Red",
-  "Too late": "Blue",
-  Done: "Cyan",
+  Low: "pink",
+  Medium: "violetBlue",
+  High: "orange",
+  "At risk": "pink",
+  "Too late": "brown",
+  Done: "green",
 };
 
-const TaskInfo = styled.div`
-  background: ${(props: { text?: Status | Priority }) =>
-    props.text && colorMapper[props.text]};
+const TaskInfo = styled.div<{ text?: Status | Priority }>`
+  background: ${(props) =>
+    props.text && props.theme.accents[colorMapper[props.text]]};
   border-radius: 5px;
   padding: 3px;
   margin-right: 5px;
@@ -89,7 +97,8 @@ const TaskUser = styled.img`
 
 const TaskUserGhost = styled.div`
   border-radius: 50%;
-  border: 1px gray dashed;
+  border: 1px dashed;
+  border-color: ${(props) => props.theme.border};
   width: 20px;
   height: 20px;
   margin-right: 10px;
@@ -121,17 +130,17 @@ const TaskTile: React.FC<TaskTilePropTypes> = ({
 
   return (
     <TaskTileWrapper
-      state={task.state}
+      taskState={task.state}
       draggable={true}
       onDragStart={handleDragStart}
       onDragEnd={handleDrop}
       data-testid="TaskTileWrapper"
     >
       <TaskSection>
-        <TaskCheckBox state={task.state}>
+        <TaskCheckBox taskState={task.state}>
           <span>√</span>
         </TaskCheckBox>
-        <TaskTitle state={task.state}>{task.title}</TaskTitle>
+        <TaskTitle taskState={task.state}>{task.title}</TaskTitle>
       </TaskSection>
       <TaskSection>
         {[task.priority, task.status]

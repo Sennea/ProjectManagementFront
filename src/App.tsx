@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import styled from "styled-components";
+import styled, { ThemeProvider } from "styled-components";
 import Board from "./components/Board";
 import {
   createRandomDate,
@@ -15,6 +15,14 @@ import { BoardPropTypes } from "./components/Board/Board";
 const Wrapper = styled.div`
   width: 100%;
   height: 100vh;
+  background: ${(props) => props.theme.main};
+  color: ${(props) => props.theme.font};
+`;
+
+const ThemeChanger = styled.p`
+  cursor: pointer;
+  margin: 0;
+  padding: 10px;
 `;
 
 const user1 = createUser({
@@ -81,6 +89,58 @@ const section3 = createSection({
   position: 2,
   taskIds: ["3"],
 });
+
+export interface ThemePropTypes {
+  main: string;
+  font: string;
+  fontSecondary: string;
+  lightBg: string;
+  darkBg: string;
+  border: string;
+  shadow: string;
+  accents: {
+    pink: string;
+    violetBlue: string;
+    green: string;
+    orange: string;
+    brown: string;
+  };
+}
+
+const theme: { [key: string]: ThemePropTypes } = {
+  light: {
+    main: "rgb(234, 247, 255)",
+    font: "rgb(0, 68, 114)",
+    fontSecondary: "rgb(0, 41, 68)",
+    lightBg: "rgb(191, 228, 252)",
+    darkBg: "rgb(153, 214, 255)",
+    border: "rgb(101, 191, 252)",
+    shadow: "rgb(66, 179, 255)",
+    accents: {
+      pink: "rgb(224, 141, 172)",
+      violetBlue: "rgb(106, 127, 219)",
+      green: "rgb(69, 203, 133)",
+      orange: "rgb(224, 159, 125)",
+      brown: "rgb(193, 143, 92)",
+    },
+  },
+  dark: {
+    main: "rgb(52, 51, 54)",
+    font: "rgb(191, 228, 252)",
+    fontSecondary: "rgb(227, 244, 255)",
+    lightBg: "rgb(49, 89, 122)",
+    darkBg: "rgb(28, 63, 92)",
+    border: "rgb(60, 112, 158)",
+    shadow: "rgb(66, 73, 168)",
+    accents: {
+      pink: "rgb(192, 53, 104)",
+      violetBlue: "rgb(48, 75, 197)",
+      green: "rgb(45, 159, 100)",
+      orange: "rgb(197, 100, 48)",
+      brown: "rgb(122, 84, 46)",
+    },
+  },
+};
 
 function App() {
   const [allTasks, setAllTasks] = React.useState([task, task2, task3, task4]);
@@ -173,16 +233,25 @@ function App() {
     setPreparedSections(prepareSections(allSections, allTasks));
   }, [allSections, allTasks]);
 
+  const [userTheme, setUserTheme] = React.useState<"light" | "dark">("light");
+
   return (
-    <Wrapper test-id="AppWrapper">
-      <Board
-        sections={preparedSections}
-        onTaskDrop={onTaskDrop}
-        onTaskDragStart={onTaskDragStart}
-        onSectionTileDragOver={onSectionTileDragOver}
-        dropSectionId={dropSectionId}
-      />
-    </Wrapper>
+    <ThemeProvider theme={theme[userTheme]}>
+      <Wrapper test-id="AppWrapper">
+        <ThemeChanger
+          onClick={() => setUserTheme(userTheme === "dark" ? "light" : "dark")}
+        >{`Change Theme to ${
+          userTheme === "dark" ? "Light" : "Dark"
+        }`}</ThemeChanger>
+        <Board
+          sections={preparedSections}
+          onTaskDrop={onTaskDrop}
+          onTaskDragStart={onTaskDragStart}
+          onSectionTileDragOver={onSectionTileDragOver}
+          dropSectionId={dropSectionId}
+        />
+      </Wrapper>
+    </ThemeProvider>
   );
 }
 

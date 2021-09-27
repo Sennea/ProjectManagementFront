@@ -20,7 +20,8 @@ const BoardSectionWrapper = styled.div`
   border: 2px solid transparent;
 
   &:hover {
-    border: 2px solid gray;
+    border: 2px solid;
+    border-color: ${(props) => props.theme.border};
   }
 
   font-size: 16px;
@@ -51,6 +52,13 @@ const GrabWrapper = styled.div`
   cursor: grab;
 `;
 
+const AddTaskField = styled.div`
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  cursor: pointer;
+`;
+
 const BoardSection: React.FC<BoardSectionPropTypes> = ({
   section,
   onTaskDrop,
@@ -59,7 +67,13 @@ const BoardSection: React.FC<BoardSectionPropTypes> = ({
   dropSectionId,
 }) => {
   const [hovered, setHovered] = React.useState(false);
+  const [newTask, setNewTask] = React.useState(false);
   const [isDragging, setIsDragging] = React.useState(false);
+
+  const handleNewTaskClick = () => {
+    console.log("NEW TASK! ");
+    setNewTask(true);
+  };
 
   return (
     <BoardSectionWrapper
@@ -94,6 +108,12 @@ const BoardSection: React.FC<BoardSectionPropTypes> = ({
             />
           ))}
         {dropSectionId === section.id && <TaskTileGhost />}
+        {newTask && <TaskTileGhost />}
+        {hovered && (
+          <AddTaskField onClick={() => handleNewTaskClick()}>
+            Add Task +
+          </AddTaskField>
+        )}
       </TasksWrapper>
     </BoardSectionWrapper>
   );
