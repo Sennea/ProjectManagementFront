@@ -17,6 +17,8 @@ const Wrapper = styled.div`
   height: 100vh;
   background: ${(props) => props.theme.main};
   color: ${(props) => props.theme.font};
+  display: flex;
+  flex-direction: column;
 `;
 
 const ThemeChanger = styled.p`
@@ -115,7 +117,7 @@ const theme: { [key: string]: ThemePropTypes } = {
     lightBg: "rgb(191, 228, 252)",
     darkBg: "rgb(153, 214, 255)",
     border: "rgb(101, 191, 252)",
-    shadow: "rgb(66, 179, 255)",
+    shadow: "#dff2ff",
     accents: {
       pink: "rgb(224, 141, 172)",
       violetBlue: "rgb(106, 127, 219)",
@@ -131,7 +133,7 @@ const theme: { [key: string]: ThemePropTypes } = {
     lightBg: "rgb(49, 89, 122)",
     darkBg: "rgb(28, 63, 92)",
     border: "rgb(60, 112, 158)",
-    shadow: "rgb(66, 73, 168)",
+    shadow: "rgb(77, 75, 80)",
     accents: {
       pink: "rgb(192, 53, 104)",
       violetBlue: "rgb(48, 75, 197)",

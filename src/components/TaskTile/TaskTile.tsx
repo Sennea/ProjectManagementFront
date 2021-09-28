@@ -145,13 +145,15 @@ const TaskTile: React.FC<TaskTilePropTypes> = ({
       <TaskSection>
         {[task.priority, task.status]
           .filter((t) => t)
-          .map((text) => (
-            <TaskInfo text={text}>{text}</TaskInfo>
+          .map((text, i) => (
+            <TaskInfo key={i} text={text}>
+              {text}
+            </TaskInfo>
           ))}
       </TaskSection>
       <TaskSection>
         {task.asignee ? (
-          task.asignee.map((user) => <TaskUser src={user.icon} />)
+          task.asignee.map((user) => <TaskUser key={user.id} src={user.icon} />)
         ) : (
           <TaskUserGhost />
         )}

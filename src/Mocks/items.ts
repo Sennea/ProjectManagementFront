@@ -48,7 +48,7 @@ interface Comment extends User {
   date: CustomDate;
 }
 
-const createRandomNumber = (max: number, min: number = 0) =>
+const createRandomNumber = (max: number, min = 0) =>
   Math.floor(Math.random() * (max - min) + min);
 
 export const createRandomDate = () => ({

@@ -40,6 +40,7 @@ const Board: React.FC<BoardPropTypes> = ({
         .sort((el) => el.position)
         .map((section) => (
           <BoardSection
+            key={section.id}
             dropSectionId={dropSectionId}
             section={section}
             onTaskDrop={onTaskDrop}

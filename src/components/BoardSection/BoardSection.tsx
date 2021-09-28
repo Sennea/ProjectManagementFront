@@ -15,6 +15,7 @@ export interface BoardSectionPropTypes {
 const BoardSectionWrapper = styled.div`
   min-width: 300px;
   max-width: 300px;
+  min-height: 300px;
   height: 100%;
   border-radius: 10px;
   border: 2px solid transparent;
@@ -46,6 +47,8 @@ const TasksWrapper = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: scroll;
+  scroll-behavior: smooth;
 `;
 
 const GrabWrapper = styled.div`
@@ -102,6 +105,7 @@ const BoardSection: React.FC<BoardSectionPropTypes> = ({
         {section.tasks &&
           section.tasks.map((task) => (
             <TaskTile
+              key={task.id}
               onTaskDrop={onTaskDrop}
               onTaskDragStart={onTaskDragStart}
               task={task}
