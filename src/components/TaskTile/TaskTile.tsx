@@ -7,6 +7,7 @@ interface TaskTilePropTypes {
   task: Task;
   onTaskDragStart: (taskId: string) => void;
   onTaskDrop: () => void;
+  onNewTaskFieldChange: ({taskId, title, asigneeId, startDate, endDate}:{taskId: string,title?: string, asigneeId?: string, startDate?: CustomDate, endDate?: CustomDate}) => void;
 }
 
 const TaskTileWrapper = styled.div<{
@@ -109,17 +110,34 @@ const TaskDate = styled.p`
   padding: 0;
 `;
 
+const TaskTitleInput = styled.input`
+    background: inherit;
+    border: none;
+    margin-left: 10px;
+    color: inherit;
+    outline: none;
+
+    ::placeholder {
+      color: inherit
+    }
+`
+
 const TaskTile: React.FC<TaskTilePropTypes> = ({
   task,
   onTaskDragStart,
   onTaskDrop,
+  onNewTaskFieldChange
 }) => {
-  const dateFormatter = (startDate: CustomDate, endDate: CustomDate) =>
-    `${startDate.day} - ${endDate.day}.${
-      endDate.month.toString().length === 1
-        ? `0${endDate.month}`
-        : endDate.month
-    }`;
+  const dateFormatter = ({startDate, endDate}: {startDate?: CustomDate, endDate: CustomDate}) =>{
+    const formatMonth = (month: number) => month.toString().length === 1
+    ? `0${month}`
+    : month;
+
+    if( startDate ) {
+      return startDate.month !== endDate.month ? `${startDate.day}.${formatMonth(startDate.month)} - ${endDate.day}.${formatMonth(endDate.month)}` : `${startDate.day} - ${endDate.day}.${formatMonth(endDate.month)}`
+    }
+    return `${endDate.day}.${formatMonth(endDate.month)}`;
+  }
   const handleDragStart = () => {
     onTaskDragStart(task.id);
   };
@@ -127,6 +145,10 @@ const TaskTile: React.FC<TaskTilePropTypes> = ({
   const handleDrop = () => {
     onTaskDrop();
   };
+
+  const handleNewTaskFieldChange = ({ title, asigneeId, startDate, endDate}:{title?: string, asigneeId?: string, startDate?: CustomDate, endDate?: CustomDate}) => {
+    onNewTaskFieldChange({taskId: task.id, title, asigneeId, startDate, endDate})
+  }
 
   return (
     <TaskTileWrapper
@@ -140,7 +162,8 @@ const TaskTile: React.FC<TaskTilePropTypes> = ({
         <TaskCheckBox taskState={task.state}>
           <span>√</span>
         </TaskCheckBox>
-        <TaskTitle taskState={task.state}>{task.title}</TaskTitle>
+        {task.title && <TaskTitle taskState={task.state}>{task.title}</TaskTitle>}
+        {!task.title && <TaskTitleInput type="text" placeholder="Type task name" onBlur={(e) => handleNewTaskFieldChange({title: e.target.value})}></TaskTitleInput>}
       </TaskSection>
       <TaskSection>
         {[task.priority, task.status]
@@ -157,7 +180,8 @@ const TaskTile: React.FC<TaskTilePropTypes> = ({
         ) : (
           <TaskUserGhost />
         )}
-        <TaskDate>{dateFormatter(task.startDate, task.endDate)}</TaskDate>
+        {task.endDate && <TaskDate>{dateFormatter({startDate:task.startDate, endDate: task.endDate})}</TaskDate>}
+        {!task.endDate && <TaskUserGhost />}
       </TaskSection>
     </TaskTileWrapper>
   );

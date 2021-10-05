@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { CustomDate } from "../../Mocks/items";
 import { SectionType } from "../Board/Board";
 import TaskTile from "../TaskTile";
 import TaskTileGhost from "../TaskTileGhost";
@@ -9,16 +10,33 @@ export interface BoardSectionPropTypes {
   onTaskDrop: () => void;
   onTaskDragStart: (taskId: string) => void;
   onSectionTileDragOver: (sectionId: string) => void;
+  onAddNewTaskClick: (sectionId: string) => void;
+  onNewTaskFieldChange: ({taskId, title, asigneeId, startDate, endDate}:{taskId: string,title?: string, asigneeId?: string, startDate?: CustomDate, endDate?: CustomDate}) => void;
   dropSectionId?: string;
 }
 
+const BREAKPOINTS = {
+  small: {
+   max: '376px',
+  },
+  medium: {
+    min: '377px',
+    max: '768px'
+  },
+  large: {
+    min: '769px',
+    max: '1024px'
+  }
+}
+
 const BoardSectionWrapper = styled.div`
-  min-width: 300px;
-  max-width: 300px;
-  min-height: 300px;
   height: 100%;
   border-radius: 10px;
   border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-basis: 20%;
 
   &:hover {
     border: 2px solid;
@@ -27,6 +45,21 @@ const BoardSectionWrapper = styled.div`
 
   font-size: 16px;
   text-align: left;
+
+  @media (max-width: ${BREAKPOINTS.small.max}) {
+    flex-basis: 50%;
+    min-width: 50%;
+  }
+
+  @media (min-width: ${BREAKPOINTS.medium.min}) and  (max-width: ${BREAKPOINTS.medium.max}){
+    flex-basis: 30%;
+    min-width: 30%;
+  }
+
+  @media  (min-width: ${BREAKPOINTS.large.min}) and  (max-width: ${BREAKPOINTS.large.max}){
+    flex-basis: 25%;
+    min-width: 25%;
+  }
 `;
 
 const SectionTop = styled.div`
@@ -47,9 +80,16 @@ const TasksWrapper = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+`;
+
+
+const TaskOverflowWrapper = styled.div`
+  padding-right: 10px;
+  margin-right: -10px;
   overflow: scroll;
   scroll-behavior: smooth;
-`;
+  height: 100%;
+`
 
 const GrabWrapper = styled.div`
   cursor: grab;
@@ -67,6 +107,8 @@ const BoardSection: React.FC<BoardSectionPropTypes> = ({
   onTaskDrop,
   onTaskDragStart,
   onSectionTileDragOver,
+  onAddNewTaskClick,
+  onNewTaskFieldChange,
   dropSectionId,
 }) => {
   const [hovered, setHovered] = React.useState(false);
@@ -75,27 +117,19 @@ const BoardSection: React.FC<BoardSectionPropTypes> = ({
 
   const handleNewTaskClick = () => {
     console.log("NEW TASK! ");
-    setNewTask(true);
+    onAddNewTaskClick(section.id);
   };
 
   return (
     <BoardSectionWrapper
-      draggable={isDragging}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       data-testid="BoardSectionWrapper"
     >
       <SectionTop data-testid="BoardSectionTop">
         <SectionTitle>{section.title}</SectionTitle>
-        {hovered && (
-          <GrabWrapper
-            onMouseOver={() => setIsDragging(true)}
-            onMouseLeave={() => setIsDragging(false)}
-          >
-            =
-          </GrabWrapper>
-        )}
       </SectionTop>
+      <TaskOverflowWrapper>
       <TasksWrapper
         data-testid="BoardSectionTasks"
         onDragEnter={() => {
@@ -108,17 +142,18 @@ const BoardSection: React.FC<BoardSectionPropTypes> = ({
               key={task.id}
               onTaskDrop={onTaskDrop}
               onTaskDragStart={onTaskDragStart}
+              onNewTaskFieldChange={onNewTaskFieldChange}
               task={task}
             />
           ))}
         {dropSectionId === section.id && <TaskTileGhost />}
-        {newTask && <TaskTileGhost />}
         {hovered && (
           <AddTaskField onClick={() => handleNewTaskClick()}>
             Add Task +
           </AddTaskField>
         )}
       </TasksWrapper>
+      </TaskOverflowWrapper>
     </BoardSectionWrapper>
   );
 };

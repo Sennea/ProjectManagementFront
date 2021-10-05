@@ -63,10 +63,10 @@ export type State = "completed" | "incompleted";
 
 export interface Task {
   id: string;
-  title: string;
+  title?: string;
   asignee?: User[];
-  startDate: CustomDate;
-  endDate: CustomDate;
+  startDate?: CustomDate;
+  endDate?: CustomDate;
   priority?: Priority;
   status?: Status;
   description?: string;

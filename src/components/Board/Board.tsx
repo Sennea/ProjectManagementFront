@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { Task } from "../../Mocks/items";
+import { CustomDate, Task } from "../../Mocks/items";
 import BoardSection from "../BoardSection";
 
 export interface SectionType {
@@ -16,6 +16,8 @@ export interface BoardPropTypes {
   onTaskDrop: () => void;
   onTaskDragStart: (taskId: string) => void;
   onSectionTileDragOver: (sectionId: string) => void;
+  onAddNewTaskClick: (sectionId: string) => void;
+  onNewTaskFieldChange: ({taskId, title, asigneeId, startDate, endDate}:{taskId: string,title?: string, asigneeId?: string, startDate?: CustomDate, endDate?: CustomDate}) => void;
   dropSectionId?: string;
 }
 
@@ -24,7 +26,8 @@ const BoardWrapper = styled.div`
   flex-direction: row;
   width: 100%;
   height: 100%;
-  padding: 20px;
+  overflow-y: hidden;
+  overflow-x: scroll;
 `;
 
 const Board: React.FC<BoardPropTypes> = ({
@@ -32,6 +35,8 @@ const Board: React.FC<BoardPropTypes> = ({
   onTaskDrop,
   onTaskDragStart,
   onSectionTileDragOver,
+  onAddNewTaskClick,
+  onNewTaskFieldChange,
   dropSectionId,
 }) => {
   return (
@@ -46,6 +51,8 @@ const Board: React.FC<BoardPropTypes> = ({
             onTaskDrop={onTaskDrop}
             onTaskDragStart={onTaskDragStart}
             onSectionTileDragOver={onSectionTileDragOver}
+            onNewTaskFieldChange={onNewTaskFieldChange}
+            onAddNewTaskClick={onAddNewTaskClick}
           />
         ))}
     </BoardWrapper>
