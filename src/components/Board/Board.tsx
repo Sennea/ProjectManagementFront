@@ -1,10 +1,11 @@
 import React from "react";
 import styled from "styled-components";
 import { CustomDate, Task } from "../../Mocks/items";
+import { orderObjectByKeys } from "../../utils";
 import BoardSection from "../BoardSection";
 
 export interface SectionType {
-  title: string;
+  name: string;
   position: number;
   taskIds?: string[];
   tasks?: Task[];
@@ -12,7 +13,7 @@ export interface SectionType {
 }
 
 export interface BoardPropTypes {
-  sections: SectionType[];
+  sections: {[key: string]: SectionType};
   onTaskDrop: () => void;
   onTaskDragStart: (taskId: string) => void;
   onSectionTileDragOver: (sectionId: string) => void;
@@ -39,22 +40,23 @@ const Board: React.FC<BoardPropTypes> = ({
   onNewTaskFieldChange,
   dropSectionId,
 }) => {
+  console.log('BOARD ', sections)
+  const ordered:{[key: string]: SectionType} = orderObjectByKeys(sections);
+
   return (
-    <BoardWrapper data-testid="BoardWrapper">
-      {sections
-        .sort((el) => el.position)
-        .map((section) => (
-          <BoardSection
-            key={section.id}
-            dropSectionId={dropSectionId}
-            section={section}
-            onTaskDrop={onTaskDrop}
-            onTaskDragStart={onTaskDragStart}
-            onSectionTileDragOver={onSectionTileDragOver}
-            onNewTaskFieldChange={onNewTaskFieldChange}
-            onAddNewTaskClick={onAddNewTaskClick}
-          />
-        ))}
+    <BoardWrapper data-testid="BoardWrapper">{
+      Object.values(ordered).map(section => <BoardSection
+        key={section.id}
+        dropSectionId={dropSectionId}
+        section={section}
+        onTaskDrop={onTaskDrop}
+        onTaskDragStart={onTaskDragStart}
+        onSectionTileDragOver={onSectionTileDragOver}
+        onNewTaskFieldChange={onNewTaskFieldChange}
+        onAddNewTaskClick={onAddNewTaskClick}
+        onTaskUpdate={jest.fn()}
+      />)
+    }
     </BoardWrapper>
   );
 };

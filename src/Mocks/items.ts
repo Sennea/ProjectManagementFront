@@ -62,7 +62,7 @@ export const createRandomDate = () => ({
 export type State = "completed" | "incompleted";
 
 export interface Task {
-  id: string;
+  id?: string;
   title?: string;
   asignee?: User[];
   startDate?: CustomDate;

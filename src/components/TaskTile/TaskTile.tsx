@@ -1,19 +1,45 @@
 import React from "react";
 import styled from "styled-components";
 import { ThemePropTypes } from "../../App";
+import { useOutsideAlerter } from "../../hooks/useOutsideClick";
 import { Task, Status, Priority, CustomDate, State } from "../../Mocks/items";
 
 interface TaskTilePropTypes {
-  task: Task;
-  onTaskDragStart: (taskId: string) => void;
-  onTaskDrop: () => void;
-  onNewTaskFieldChange: ({taskId, title, asigneeId, startDate, endDate}:{taskId: string,title?: string, asigneeId?: string, startDate?: CustomDate, endDate?: CustomDate}) => void;
+  task?: Task;
+  onTaskEdit: (data: { name?: string; points?: number }) => void;
+  onTaskDragStart?: (taskId: string) => void;
+  onTaskDrop?: () => void;
+  onNewTaskFieldChange?: ({
+    taskId,
+    title,
+    asigneeId,
+    startDate,
+    endDate,
+  }: {
+    taskId: string;
+    title?: string;
+    asigneeId?: string;
+    startDate?: CustomDate;
+    endDate?: CustomDate;
+  }) => void;
 }
+
+const Overlay = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  background: black;
+  opacity: 0.5;
+`;
 
 const TaskTileWrapper = styled.div<{
   theme: ThemePropTypes;
   taskState?: State;
 }>`
+  z-index: 4;
   display: flex;
   flex-direction: column;
   padding: 10px;
@@ -111,79 +137,132 @@ const TaskDate = styled.p`
 `;
 
 const TaskTitleInput = styled.input`
-    background: inherit;
-    border: none;
-    margin-left: 10px;
-    color: inherit;
-    outline: none;
+  background: inherit;
+  border: none;
+  margin-left: 10px;
+  color: inherit;
+  outline: none;
 
-    ::placeholder {
-      color: inherit
-    }
-`
+  ::placeholder {
+    color: inherit;
+  }
+`;
 
 const TaskTile: React.FC<TaskTilePropTypes> = ({
-  task,
+  task = {},
   onTaskDragStart,
   onTaskDrop,
-  onNewTaskFieldChange
+  onNewTaskFieldChange,
+  onTaskEdit,
 }) => {
-  const dateFormatter = ({startDate, endDate}: {startDate?: CustomDate, endDate: CustomDate}) =>{
-    const formatMonth = (month: number) => month.toString().length === 1
-    ? `0${month}`
-    : month;
+  const [isActive, setIsActive] = React.useState(false);
+  const [collectedUpdatedData, setCollectedUpdatedData] = React.useState<any>({});
 
-    if( startDate ) {
-      return startDate.month !== endDate.month ? `${startDate.day}.${formatMonth(startDate.month)} - ${endDate.day}.${formatMonth(endDate.month)}` : `${startDate.day} - ${endDate.day}.${formatMonth(endDate.month)}`
+  const dateFormatter = ({
+    startDate,
+    endDate,
+  }: {
+    startDate?: CustomDate;
+    endDate: CustomDate;
+  }) => {
+    const formatMonth = (month: number) =>
+      month.toString().length === 1 ? `0${month}` : month;
+
+    if (startDate) {
+      return startDate.month !== endDate.month
+        ? `${startDate.day}.${formatMonth(startDate.month)} - ${
+            endDate.day
+          }.${formatMonth(endDate.month)}`
+        : `${startDate.day} - ${endDate.day}.${formatMonth(endDate.month)}`;
     }
     return `${endDate.day}.${formatMonth(endDate.month)}`;
-  }
+  };
   const handleDragStart = () => {
-    onTaskDragStart(task.id);
+    // onTaskDragStart(task.id);
   };
 
   const handleDrop = () => {
-    onTaskDrop();
+    // onTaskDrop();
   };
 
-  const handleNewTaskFieldChange = ({ title, asigneeId, startDate, endDate}:{title?: string, asigneeId?: string, startDate?: CustomDate, endDate?: CustomDate}) => {
-    onNewTaskFieldChange({taskId: task.id, title, asigneeId, startDate, endDate})
-  }
+  const handleNewTaskFieldChange = ({
+    name,
+    asigneeIds,
+    points,
+  }: {
+    name?: string;
+    asigneeIds?: string;
+    points?: number;
+  }) => {
+    const data = {
+      name: name || collectedUpdatedData.name ,
+      asigneeIds: asigneeIds || collectedUpdatedData.asigneeIds,
+      points: points || collectedUpdatedData.points
+    }
+    setCollectedUpdatedData(data);
+  };
+
+  const handleClickOutside = () => {
+    setIsActive(false);
+    collectedUpdatedData &&  onTaskEdit(collectedUpdatedData);
+    setCollectedUpdatedData({});
+  };
 
   return (
-    <TaskTileWrapper
-      taskState={task.state}
-      draggable={true}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDrop}
-      data-testid="TaskTileWrapper"
-    >
-      <TaskSection>
-        <TaskCheckBox taskState={task.state}>
-          <span>√</span>
-        </TaskCheckBox>
-        {task.title && <TaskTitle taskState={task.state}>{task.title}</TaskTitle>}
-        {!task.title && <TaskTitleInput type="text" placeholder="Type task name" onBlur={(e) => handleNewTaskFieldChange({title: e.target.value})}></TaskTitleInput>}
-      </TaskSection>
-      <TaskSection>
-        {[task.priority, task.status]
-          .filter((t) => t)
-          .map((text, i) => (
-            <TaskInfo key={i} text={text}>
-              {text}
-            </TaskInfo>
-          ))}
-      </TaskSection>
-      <TaskSection>
-        {task.asignee ? (
-          task.asignee.map((user) => <TaskUser key={user.id} src={user.icon} />)
-        ) : (
-          <TaskUserGhost />
-        )}
-        {task.endDate && <TaskDate>{dateFormatter({startDate:task.startDate, endDate: task.endDate})}</TaskDate>}
-        {!task.endDate && <TaskUserGhost />}
-      </TaskSection>
-    </TaskTileWrapper>
+    <>
+      {isActive && <Overlay onClick={handleClickOutside}></Overlay>}
+      <TaskTileWrapper
+        onClick={() => setIsActive(true)}
+        taskState={task.state}
+        draggable={true}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDrop}
+        data-testid="TaskTileWrapper"
+      >
+        <TaskSection>
+          <TaskCheckBox taskState={task.state}>
+            <span>√</span>
+          </TaskCheckBox>
+          {task.title && (
+            <TaskTitle taskState={task.state}>{task.title}</TaskTitle>
+          )}
+          {!task.title && (
+            <TaskTitleInput
+              type="text"
+              placeholder="Type task name"
+              onBlur={(e) => handleNewTaskFieldChange({ name: e.target.value })}
+            ></TaskTitleInput>
+          )}
+        </TaskSection>
+        <TaskSection>
+          {[task.priority, task.status]
+            .filter((t) => t)
+            .map((text, i) => (
+              <TaskInfo key={i} text={text}>
+                {text}
+              </TaskInfo>
+            ))}
+        </TaskSection>
+        <TaskSection>
+          {task.asignee ? (
+            task.asignee.map((user) => (
+              <TaskUser key={user.id} src={user.icon} />
+            ))
+          ) : (
+            <TaskUserGhost />
+          )}
+          {task.endDate && (
+            <TaskDate>
+              {dateFormatter({
+                startDate: task.startDate,
+                endDate: task.endDate,
+              })}
+            </TaskDate>
+          )}
+          {!task.endDate && <TaskUserGhost />}
+        </TaskSection>
+      </TaskTileWrapper>
+    </>
   );
 };
 

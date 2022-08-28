@@ -1,3 +1,4 @@
+import API from "@aws-amplify/api";
 import React from "react";
 import styled from "styled-components";
 import { CustomDate } from "../../Mocks/items";
@@ -5,14 +6,17 @@ import { SectionType } from "../Board/Board";
 import TaskTile from "../TaskTile";
 import TaskTileGhost from "../TaskTileGhost";
 
+
+
 export interface BoardSectionPropTypes {
   section: SectionType;
-  onTaskDrop: () => void;
-  onTaskDragStart: (taskId: string) => void;
-  onSectionTileDragOver: (sectionId: string) => void;
-  onAddNewTaskClick: (sectionId: string) => void;
-  onNewTaskFieldChange: ({taskId, title, asigneeId, startDate, endDate}:{taskId: string,title?: string, asigneeId?: string, startDate?: CustomDate, endDate?: CustomDate}) => void;
+  onTaskDrop?: () => void;
+  onTaskDragStart?: (taskId: string) => void;
+  onSectionTileDragOver?: (sectionId: string) => void;
+  onAddNewTaskClick?: (sectionId: string) => void;
+  onNewTaskFieldChange?: ({taskId, title, asigneeId, startDate, endDate}:{taskId: string,title?: string, asigneeId?: string, startDate?: CustomDate, endDate?: CustomDate}) => void;
   dropSectionId?: string;
+  onTaskUpdate: (data: {name?: string, points?: number, id?: string}) => void
 }
 
 const BREAKPOINTS = {
@@ -110,15 +114,11 @@ const BoardSection: React.FC<BoardSectionPropTypes> = ({
   onAddNewTaskClick,
   onNewTaskFieldChange,
   dropSectionId,
+  onTaskUpdate
 }) => {
   const [hovered, setHovered] = React.useState(false);
-  const [newTask, setNewTask] = React.useState(false);
   const [isDragging, setIsDragging] = React.useState(false);
-
-  const handleNewTaskClick = () => {
-    console.log("NEW TASK! ");
-    onAddNewTaskClick(section.id);
-  };
+  const [isActive, setIsActive] = React.useState(false);
 
   return (
     <BoardSectionWrapper
@@ -127,28 +127,30 @@ const BoardSection: React.FC<BoardSectionPropTypes> = ({
       data-testid="BoardSectionWrapper"
     >
       <SectionTop data-testid="BoardSectionTop">
-        <SectionTitle>{section.title}</SectionTitle>
+        <SectionTitle>{section.name}</SectionTitle>
       </SectionTop>
       <TaskOverflowWrapper>
       <TasksWrapper
         data-testid="BoardSectionTasks"
         onDragEnter={() => {
-          onSectionTileDragOver(section.id);
+          // onSectionTileDragOver(section.id);
         }}
       >
         {section.tasks &&
           section.tasks.map((task) => (
             <TaskTile
               key={task.id}
-              onTaskDrop={onTaskDrop}
-              onTaskDragStart={onTaskDragStart}
-              onNewTaskFieldChange={onNewTaskFieldChange}
+              // onTaskDrop={onTaskDrop}
+              // onTaskDragStart={onTaskDragStart}
+              // onNewTaskFieldChange={onNewTaskFieldChange}
               task={task}
+              onTaskEdit={onTaskUpdate}
             />
           ))}
         {dropSectionId === section.id && <TaskTileGhost />}
+        {isActive && <TaskTile  onTaskEdit={onTaskUpdate}/>}
         {hovered && (
-          <AddTaskField onClick={() => handleNewTaskClick()}>
+          <AddTaskField onClick={() => setIsActive(true)}>
             Add Task +
           </AddTaskField>
         )}

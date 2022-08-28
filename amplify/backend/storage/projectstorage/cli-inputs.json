@@ -1,0 +1,14 @@
+{
+  "resourceName": "projectstorage",
+  "policyUUID": "43e03b5b",
+  "bucketName": "project-management-mgr-kasia-bucket",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "triggerFunction": "NONE",
+  "groupAccess": {}
+}

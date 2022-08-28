@@ -17,5 +17,11 @@ module.exports = {
     sourceType: "module",
   },
   plugins: ["react", "@typescript-eslint"],
-  rules: {},
+  rules: {
+    '@typescript-eslint/ban-ts-comment': 1,
+    '@typescript-eslint/no-empty-interface': 1,
+    'react/jsx-key': 1,
+    'no-empty-pattern': 1,
+    '@typescript-eslint/no-empty-function':1
+  },
 };

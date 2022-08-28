@@ -12,6 +12,30 @@ import {
   Task,
 } from "./Mocks/items";
 import { BoardPropTypes } from "./components/Board/Board";
+import { convertArrayToObject } from "./utils";
+import "@aws-amplify/ui-react/styles.css";
+import {
+  withAuthenticator,
+  Button,
+  Heading,
+  Image,
+  View,
+  Card,
+  Authenticator,
+} from "@aws-amplify/ui-react";
+
+import { Route } from "react-router";
+import { Routes } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Home from "./components/Home";
+import ProjectsList from "./components/ProjectBoardsList";
+import ProjectSections from "./components/ProjectSections";
+import { Project } from "./components/ProjectBoard/ProjectBoard";
+import { listProjects } from "./graphql/queries";
+import API from "@aws-amplify/api";
+import ProjectBoardsList from "./components/ProjectBoardsList";
+
+const initialFormState = { name: "", description: "" };
 
 const Wrapper = styled.div`
   width: 100%;
@@ -146,26 +170,41 @@ const theme: { [key: string]: ThemePropTypes } = {
   },
 };
 
-function App() {
-  const [allTasks, setAllTasks] = React.useState([task, task2, task3, task4]);
-  const [allSections, setAllSections] = React.useState([
-    section,
-    section2,
-    section3,
-  ]);
-  const prepareSections = (sections: Section[], tasks: Task[]) => {
-    return sections.map((section) =>
-      section.taskIds
-        ? {
-            ...section,
-            jo: "elo",
-            tasks: tasks.filter((t: Task) => section.taskIds!.includes(t.id)),
-          }
-        : section
-    );
+const fetchAllTasks = (): { [key: string]: Task } => {
+  const allTasks: Task[] = [task, task2, task3, task4];
+
+  return convertArrayToObject(allTasks, "id");
+};
+
+const fetchAllSections = (): { [key: string]: Section } => {
+  const allSections: Section[] = [section, section2, section3];
+
+  return convertArrayToObject(allSections, "id");
+};
+
+function App(prop: any) {
+  console.log("props", prop);
+  const [allTasks, setAllTasks] = React.useState(fetchAllTasks());
+  const [allSections, setAllSections] = React.useState(fetchAllSections());
+
+  const prepareSections = (): { [key: string]: Section } => {
+    const sectionsWithTasks = {};
+    Object.entries(allSections).forEach(([id, section]: [string, Section]) => {
+      if (!section.taskIds || !section.taskIds.length) {
+        return Object.assign(sectionsWithTasks, { [id]: section });
+      }
+      const tasks: Task[] = [];
+      section.taskIds.forEach(
+        (taskId) => allTasks[taskId] && tasks.push(allTasks[taskId])
+      );
+
+      Object.assign(sectionsWithTasks, { [id]: { ...section, tasks } });
+    });
+
+    return sectionsWithTasks;
   };
   const [preparedSections, setPreparedSections] = React.useState(
-    prepareSections(allSections, allTasks)
+    prepareSections()
   );
 
   const [dragTaskId, setDragTaskId] = React.useState<string | undefined>(
@@ -184,23 +223,24 @@ function App() {
   };
 
   const onAddNewTaskClick = (sectionId: string) => {
-    const newId: string = (allTasks.length + 1).toString();
+    const newId: string = (Object.keys(allTasks).length + 1).toString();
     const newTask: Task = {
       id: newId,
       sectionId,
     };
+    const updatedTasks = {
+      ...allTasks,
+      [newId]: newTask,
+    };
 
-    const updatedSections = allSections.map((section) =>
-      section.id === sectionId
-        ? {
-            ...section,
-            taskIds: section.taskIds ? [...section.taskIds, newId] : [newId],
-          }
-        : section
-    );
+    const updatedSections = allSections;
+    updatedSections[sectionId] = {
+      ...updatedSections[sectionId],
+      taskIds: [...(updatedSections[sectionId].taskIds || []), newId],
+    };
 
     setAllSections(updatedSections);
-    setAllTasks([...allTasks, newTask]);
+    setAllTasks(updatedTasks);
   };
 
   const onNewTaskFieldChange = ({
@@ -216,10 +256,8 @@ function App() {
     startDate?: CustomDate;
     endDate?: CustomDate;
   }) => {
-
-    console.log('CHANGING STH ', taskId)
-    let task: Task | undefined = allTasks.find((task) => task.id === taskId);
-    console.log('TASK ', task);
+    let task: Task | undefined = allTasks[taskId];
+    // console.log("TASK ", task);
     if (!task) return;
     task = {
       ...task,
@@ -237,7 +275,8 @@ function App() {
       endDate: endDate || task.endDate,
     };
 
-    const updatedTasks: Task[] = allTasks.map(t => t.id === taskId ? task! : t);
+    const updatedTasks = allTasks;
+    updatedTasks[taskId] = task;
     setAllTasks(updatedTasks);
   };
 
@@ -247,52 +286,31 @@ function App() {
       setDropSectionId(undefined);
       return;
     }
-    const task = allTasks.find((t) => t.id === dragTaskId);
+    const task = allTasks[dragTaskId];
     if (!task) return;
     if (task.sectionId === dropSectionId) return;
+    // console.log("SECTION ID", task);
 
-    const updatedTasks = allTasks.map((task) =>
-      task.id === dragTaskId
-        ? {
-            ...task,
-            sectionId: dropSectionId,
-          }
-        : task
-    );
+    const updatedSections = allSections;
+    updatedSections[task.sectionId].taskIds = (
+      updatedSections[task.sectionId].taskIds || []
+    ).filter((sectionTaskId) => sectionTaskId !== dragTaskId);
+    updatedSections[dropSectionId].taskIds = [
+      ...(updatedSections[dropSectionId].taskIds || []),
+      dragTaskId,
+    ];
 
-    const updatedSections = allSections.map((section) => {
-      if (section.id === task.sectionId) {
-        // REMOVE TASK FROM SECTION TASK IDS
-        return {
-          ...section,
-          taskIds:
-            section.taskIds &&
-            section.taskIds.filter(
-              (sectionTaskId) => sectionTaskId !== dragTaskId
-            ),
-          tasks: section,
-        };
-      } else if (section.id === dropSectionId) {
-        // ADD TASK TO SECTION TASK IDS
-        return {
-          ...section,
-          taskIds: section.taskIds
-            ? [...section.taskIds, dragTaskId]
-            : [dragTaskId],
-        };
-      } else {
-        return section;
-      }
-    });
+    const updatedTasks = allTasks;
+    updatedTasks[dragTaskId].sectionId = dropSectionId;
 
     setDragTaskId(undefined);
     setDropSectionId(undefined);
-    setAllSections(updatedSections);
-    setAllTasks(updatedTasks);
+    setAllSections({ ...updatedSections });
+    setAllTasks({ ...updatedTasks });
   };
 
   React.useEffect(() => {
-    setPreparedSections(prepareSections(allSections, allTasks));
+    setPreparedSections(prepareSections());
   }, [allSections, allTasks]);
 
   const [userTheme, setUserTheme] = React.useState<"light" | "dark">("dark");
@@ -305,9 +323,32 @@ function App() {
     }
   };
 
+  const [projects, setProjects] = React.useState<Project[]>([]);
+  React.useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    const apiData = (await API.graphql({ query: listProjects })) as any;
+    setProjects(apiData.data.listProjects.items);
+  };
+
   return (
     <ThemeProvider theme={theme[userTheme]}>
-      <Wrapper test-id="AppWrapper">
+      <ThemeChanger onClick={setUserThemeHtml}>{`Change Theme to ${
+        userTheme === "dark" ? "Light" : "Dark"
+      }`}</ThemeChanger>
+      <Wrapper>
+        <Navbar />
+        <Routes>
+          <Route element={<Home />} path="/" />
+          <Route element={<ProjectBoardsList />} path="/projects/:id/boards" />
+          <Route element={<ProjectSections />} path="/projects/:id/boards/:boardId" />
+          <Route element={<div>404</div>} />
+        </Routes>
+      </Wrapper>
+
+      {/* <Wrapper test-id="AppWrapper">
         <ThemeChanger onClick={setUserThemeHtml}>{`Change Theme to ${
           userTheme === "dark" ? "Light" : "Dark"
         }`}</ThemeChanger>
@@ -320,9 +361,9 @@ function App() {
           onNewTaskFieldChange={onNewTaskFieldChange}
           dropSectionId={dropSectionId}
         />
-      </Wrapper>
+      </Wrapper> */}
     </ThemeProvider>
   );
 }
 
-export default App;
+export default withAuthenticator(App);
